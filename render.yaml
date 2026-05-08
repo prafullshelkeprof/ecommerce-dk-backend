@@ -2,7 +2,7 @@ services:
   - type: web
     name: ecommerce-dk-backend
     runtime: node
-    region: frankfurt          # closest to Denmark
+    region: frankfurt
     plan: free
     branch: master
     buildCommand: npm install && npm run build
@@ -11,20 +11,22 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: NODE_VERSION
-        value: "20"
 
-      # ── Secrets – fill these in Render dashboard ──────────────────────────
+      # Pin to Node 20 LTS – Medusa is NOT compatible with Node 26
+      - key: NODE_VERSION
+        value: "20.19.1"
+
+      # ── Secrets – set manually in Render dashboard ────────────────────────
       - key: DATABASE_URL
-        sync: false            # set manually in Render dashboard (Neon URL)
+        sync: false
 
       - key: JWT_SECRET
-        generateValue: true    # Render auto-generates a secure random value
+        generateValue: true
 
       - key: COOKIE_SECRET
         generateValue: true
 
-      # ── CORS – your Vercel frontend URL ───────────────────────────────────
+      # ── CORS ──────────────────────────────────────────────────────────────
       - key: STORE_CORS
         value: https://ecommerce-dk-dmrb.vercel.app
 
@@ -33,7 +35,3 @@ services:
 
       - key: AUTH_CORS
         value: https://ecommerce-dk-dmrb.vercel.app
-
-      # Redis is NOT required for the free tier – leave blank or add later
-      # - key: REDIS_URL
-      #   value: redis://...
