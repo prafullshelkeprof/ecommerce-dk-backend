@@ -3,6 +3,11 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
+  admin: {
+    // Disable admin panel serving in production — the storefront only needs
+    // the API. You can access the admin locally via `npm run dev`.
+    disable: process.env.NODE_ENV === 'production',
+  },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     http: {
