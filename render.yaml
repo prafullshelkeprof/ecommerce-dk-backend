@@ -16,6 +16,15 @@ services:
       - key: NODE_VERSION
         value: "20.19.1"
 
+      # Forces SSL on ALL postgres connections globally (pg driver env var)
+      # This is the most reliable fix for Neon which requires SSL
+      - key: PGSSLMODE
+        value: require
+
+      # Disable SSL cert verification (Neon uses self-signed certs)
+      - key: NODE_TLS_REJECT_UNAUTHORIZED
+        value: "0"
+
       # ── Secrets – set manually in Render dashboard ────────────────────────
       - key: DATABASE_URL
         sync: false
