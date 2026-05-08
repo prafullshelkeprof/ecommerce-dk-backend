@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\PrafullShelke\\\\Learning\\\\ecommerce-dk-backend\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(gh auth status)"
+    ]
+  }
+}
