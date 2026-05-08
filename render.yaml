@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: ecommerce-dk-backend
+    runtime: node
+    region: frankfurt          # closest to Denmark
+    plan: free
+    branch: master
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+
+      # ── Secrets – fill these in Render dashboard ──────────────────────────
+      - key: DATABASE_URL
+        sync: false            # set manually in Render dashboard (Neon URL)
+
+      - key: JWT_SECRET
+        generateValue: true    # Render auto-generates a secure random value
+
+      - key: COOKIE_SECRET
+        generateValue: true
+
+      # ── CORS – your Vercel frontend URL ───────────────────────────────────
+      - key: STORE_CORS
+        value: https://ecommerce-dk-dmrb.vercel.app
+
+      - key: ADMIN_CORS
+        value: https://ecommerce-dk-dmrb.vercel.app
+
+      - key: AUTH_CORS
+        value: https://ecommerce-dk-dmrb.vercel.app
+
+      # Redis is NOT required for the free tier – leave blank or add later
+      # - key: REDIS_URL
+      #   value: redis://...
