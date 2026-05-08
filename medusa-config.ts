@@ -1,26 +1,37 @@
-import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+// Ensure DATABASE_URL always has sslmode=require for cloud Postgres (Neon, Supabase, etc.)
+function getDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL || ''
+  if (process.env.NODE_ENV === 'production' && url && !url.includes('sslmode=')) {
+    return url.includes('?') ? `${url}&sslmode=require` : `${url}?sslmode=require`
+  }
+  return url
+}
+
 module.exports = defineConfig({
   projectConfig: {
-    databaseUrl: process.env.DATABASE_URL,
+    databaseUrl: getDatabaseUrl(),
     databaseDriverOptions: process.env.NODE_ENV === 'production'
-      ? { ssl: { rejectUnauthorized: false } }   // required for Neon / most cloud Postgres
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false, // Neon uses self-signed certs
+          },
+        }
       : {},
     http: {
-      storeCors:  process.env.STORE_CORS!,
-      adminCors:  process.env.ADMIN_CORS!,
-      authCors:   process.env.AUTH_CORS!,
-      jwtSecret:  process.env.JWT_SECRET  || 'supersecret',
+      storeCors:    process.env.STORE_CORS!,
+      adminCors:    process.env.ADMIN_CORS!,
+      authCors:     process.env.AUTH_CORS!,
+      jwtSecret:    process.env.JWT_SECRET    || 'supersecret',
       cookieSecret: process.env.COOKIE_SECRET || 'supersecret',
     },
   },
 
-  // ─── Modules ─────────────────────────────────────────────────────────────
-  // Redis is optional. If REDIS_URL is set we use it; otherwise Medusa falls
-  // back to the in-process / database implementations – fine for a single
-  // Render instance on the free tier.
+  // Redis is optional – if REDIS_URL is not set Medusa uses in-memory fallback
   modules: [
     ...(process.env.REDIS_URL
       ? [
