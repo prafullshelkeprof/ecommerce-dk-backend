@@ -25,7 +25,7 @@ import {
   updateStoresStep,
   updateStoresWorkflow,
 } from "@medusajs/medusa/core-flows";
-import { ApiKey } from "../../.medusa/types/query-entry-points";
+type ApiKey = { id: string };
 
 const updateStoreCurrencies = createWorkflow(
   "update-store-currencies",
