@@ -10,16 +10,44 @@
 const { execSync } = require('child_process');
 const { Client }   = require('pg');
 
+async function waitForDb(retries = 10, delayMs = 3000) {
+  for (let i = 1; i <= retries; i++) {
+    const c = new Client({ connectionString: process.env.DATABASE_URL });
+    try {
+      await c.connect();
+      await c.query('SELECT 1');
+      await c.end();
+      console.log('==> Database is ready ✓\n');
+      return;
+    } catch (e) {
+      console.warn(`==> Database not ready yet (attempt ${i}/${retries}): ${e.message}`);
+      await c.end().catch(() => {});
+      if (i === retries) throw new Error('Database never became ready. Aborting.');
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+}
+
 async function main() {
+  // ── 0. Wait for DB to be reachable (Neon free tier can be slow to wake) ──
+  console.log('\n==> Waiting for database to be ready...');
+  await waitForDb();
+
   // ── 1. Migrations ────────────────────────────────────────────────────────
-  console.log('\n==> Running migrations...');
+  console.log('==> Running migrations...');
   try {
     execSync('npx medusa db:migrate', { stdio: 'inherit', cwd: process.cwd() });
     console.log('==> Migrations complete ✓\n');
   } catch (e) {
-    // Migration scripts phase can fail with a pool.acquire() bug in 2.13.x.
-    // Schema migrations already ran before the error — safe to continue.
-    console.warn('==> Migration scripts step failed (schema already up to date), continuing...\n');
+    // The pool.acquire() bug in Medusa 2.13.x causes a timeout AFTER
+    // migrations have already been applied — safe to continue in that case.
+    // For all other errors, log clearly so they appear in Render's deploy log.
+    const msg = e.message || '';
+    if (msg.includes('pool') || msg.includes('acquire') || msg.includes('Timeout')) {
+      console.warn('==> Known pool.acquire timeout — schema already applied, continuing...\n');
+    } else {
+      console.error('==> Migration error (non-fatal, server will reveal root cause):', msg);
+    }
   }
 
   // ── 2. Check if already seeded ───────────────────────────────────────────
