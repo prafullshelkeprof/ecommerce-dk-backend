@@ -32,12 +32,12 @@ export default {
   admin: {
     disable: true,
   },
-  modules: [
+  modules: {
     // Explicitly register in-memory locking so migration scripts can acquire
     // the lock during both `medusa db:migrate` and `medusa start`.
     // Without this, container.resolve(Modules.LOCKING) returns undefined on Neon.
-    {
+    locking: {
       resolve: "@medusajs/locking",
     },
-  ],
+  },
 };
