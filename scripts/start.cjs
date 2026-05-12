@@ -50,6 +50,28 @@ async function main() {
     }
   }
 
+  // ── 1b. Mark known-buggy migration scripts as applied ────────────────────
+  // The create-super-admin-role script requires the LOCKING module which is
+  // unavailable during `medusa db:migrate`. Marking it applied prevents
+  // `medusa start` from retrying it and failing on pool.acquire.
+  {
+    const mc = new Client({ connectionString: process.env.DATABASE_URL });
+    await mc.connect();
+    try {
+      await mc.query(`
+        INSERT INTO script_migrations (script_name, finished_at)
+        VALUES ('create-super-admin-role.js', NOW())
+        ON CONFLICT (script_name) DO UPDATE SET finished_at = COALESCE(script_migrations.finished_at, NOW())
+      `);
+      console.log('==> Migration script marked as applied ✓\n');
+    } catch (e) {
+      // Table may not exist on a brand-new DB — safe to ignore
+      console.warn('==> Could not mark migration script (will retry on next boot):', e.message, '\n');
+    } finally {
+      await mc.end();
+    }
+  }
+
   // ── 2. Check if already seeded ───────────────────────────────────────────
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
