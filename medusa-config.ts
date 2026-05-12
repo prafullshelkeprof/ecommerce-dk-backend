@@ -1,10 +1,23 @@
+// Strip sslmode and channel_binding from the URL so pg-connection-string doesn't
+// override SSL config with verify-full semantics. SSL is handled via databaseDriverOptions.
+function buildDatabaseUrl(raw: string | undefined): string {
+  if (!raw) return '';
+  return raw
+    .replace(/[?&]sslmode=[^&]*/g, '')
+    .replace(/[?&]channel_binding=[^&]*/g, '')
+    .replace(/\?&/, '?')
+    .replace(/\?$/, '');
+}
+
 export default {
   projectConfig: {
-    databaseUrl: process.env.DATABASE_URL,
+    databaseUrl: buildDatabaseUrl(process.env.DATABASE_URL),
     redisUrl: process.env.REDIS_URL,
     databaseDriverOptions: {
-      ssl: {
-        rejectUnauthorized: false,
+      connection: {
+        ssl: {
+          rejectUnauthorized: false,
+        },
       },
     },
     http: {
