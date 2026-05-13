@@ -121,7 +121,7 @@ async function main() {
 
   // ── 5. Start server ───────────────────────────────────────────────────────
   console.log('==> Starting Medusa server...');
-  execSync('npx medusa start', {
+  execSync('npx medusa start --directory .medusa/server', {
     stdio: 'inherit',
     cwd: process.cwd(),
     env: { ...process.env, HOST: '0.0.0.0' },
