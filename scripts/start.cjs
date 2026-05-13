@@ -3,12 +3,15 @@
  * 1. Run migrations
  * 2. Seed database on first boot (skips if already seeded)
  * 3. Print publishable API key to logs
- * 4. Start Medusa server
+ * 4. Ensure admin build is in place
+ * 5. Start Medusa server
  */
 'use strict';
 
 const { execSync } = require('child_process');
 const { Client }   = require('pg');
+const fs           = require('fs');
+const path         = require('path');
 
 async function waitForDb(retries = 10, delayMs = 3000) {
   for (let i = 1; i <= retries; i++) {
@@ -39,9 +42,6 @@ async function main() {
     execSync('npx medusa db:migrate', { stdio: 'inherit', cwd: process.cwd() });
     console.log('==> Migrations complete ✓\n');
   } catch (e) {
-    // The pool.acquire() bug in Medusa 2.13.x causes a timeout AFTER
-    // migrations have already been applied — safe to continue in that case.
-    // For all other errors, log clearly so they appear in Render's deploy log.
     const msg = e.message || '';
     if (msg.includes('pool') || msg.includes('acquire') || msg.includes('Timeout')) {
       console.warn('==> Known pool.acquire timeout — schema already applied, continuing...\n');
@@ -51,9 +51,6 @@ async function main() {
   }
 
   // ── 1b. Mark known-buggy migration scripts as applied ────────────────────
-  // The create-super-admin-role script requires the LOCKING module which is
-  // unavailable during `medusa db:migrate`. Marking it applied prevents
-  // `medusa start` from retrying it and failing on pool.acquire.
   {
     const mc = new Client({ connectionString: process.env.DATABASE_URL });
     await mc.connect();
@@ -65,7 +62,6 @@ async function main() {
       `);
       console.log('==> Migration script marked as applied ✓\n');
     } catch (e) {
-      // Table may not exist on a brand-new DB — safe to ignore
       console.warn('==> Could not mark migration script (will retry on next boot):', e.message, '\n');
     } finally {
       await mc.end();
@@ -83,7 +79,6 @@ async function main() {
     );
     alreadySeeded = parseInt(res.rows[0].count, 10) > 0;
   } catch {
-    // Table may not exist yet on very first run – seed anyway
     alreadySeeded = false;
   } finally {
     await client.end();
@@ -117,6 +112,27 @@ async function main() {
     }
   } catch (e) {
     console.warn('Could not fetch publishable key:', e.message);
+  }
+
+  // ── 4b. Ensure admin build is in place ───────────────────────────────────
+  // medusa build puts the admin at .medusa/server/public/admin/
+  // medusa start looks for it at ./public/admin/
+  // Copy it over so the paths align.
+  const adminSrc  = path.join(process.cwd(), '.medusa', 'server', 'public', 'admin');
+  const adminDest = path.join(process.cwd(), 'public', 'admin');
+  const adminIndexExists = fs.existsSync(path.join(adminDest, 'index.html'));
+
+  if (!adminIndexExists) {
+    if (fs.existsSync(adminSrc)) {
+      console.log('==> Copying admin build to public/admin/ ...');
+      fs.mkdirSync(adminDest, { recursive: true });
+      execSync(`cp -r "${adminSrc}/." "${adminDest}/"`, { stdio: 'inherit' });
+      console.log('==> Admin build ready ✓\n');
+    } else {
+      console.warn('==> Admin build not found at .medusa/server/public/admin/ — admin panel will be unavailable.\n');
+    }
+  } else {
+    console.log('==> Admin build already in place ✓\n');
   }
 
   // ── 5. Start server ───────────────────────────────────────────────────────
