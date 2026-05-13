@@ -13,7 +13,7 @@
     "medusa"
   ],
   "scripts": {
-    "build": "medusa build",
+    "build": "DISABLE_ADMIN=true medusa build",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "node scripts/start.cjs",
     "dev": "medusa develop",
