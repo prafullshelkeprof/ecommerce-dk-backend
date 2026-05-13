@@ -31,6 +31,10 @@ export default {
   },
 
   admin: {
+    // During `medusa build` on Render we set DISABLE_ADMIN_BUILD=true to skip
+    // the memory-intensive React bundle (pre-built files are committed to git).
+    // At runtime the env var is absent so the admin IS served normally.
+    disable: process.env.DISABLE_ADMIN_BUILD === "true",
     backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
   modules: {
