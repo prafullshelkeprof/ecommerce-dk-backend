@@ -30,6 +30,9 @@ export default {
     },
   },
 
+  admin: {
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+  },
   modules: {
     locking: {
       resolve: "@medusajs/locking",

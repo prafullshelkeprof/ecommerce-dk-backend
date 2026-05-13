@@ -5,7 +5,7 @@ services:
     region: frankfurt
     plan: free
     branch: master
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && NODE_OPTIONS=--max-old-space-size=2048 npm run build
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
@@ -36,6 +36,9 @@ services:
         generateValue: true
 
       # ── CORS ──────────────────────────────────────────────────────────────
+      - key: MEDUSA_BACKEND_URL
+        value: https://ecommerce-dk-backend-1.onrender.com
+
       - key: STORE_CORS
         value: https://ecommerce-dk-dmrb.vercel.app
 
