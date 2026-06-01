@@ -2,8 +2,8 @@
  * Smart startup script:
  * 1. Run migrations
  * 2. Seed database on first boot (skips if already seeded)
- * 3. Print publishable API key to logs
- * 4. Ensure admin build is in place
+ * 3. Create admin user if none exists
+ * 4. Print publishable API key to logs
  * 5. Start Medusa server
  */
 'use strict';
@@ -32,7 +32,7 @@ async function waitForDb(retries = 10, delayMs = 3000) {
 }
 
 async function main() {
-  // ── 0. Wait for DB to be reachable (Neon free tier can be slow to wake) ──
+  // ── 0. Wait for DB ───────────────────────────────────────────────────────
   console.log('\n==> Waiting for database to be ready...');
   await waitForDb();
 
@@ -96,6 +96,37 @@ async function main() {
     console.log('==> Database already seeded, skipping.\n');
   }
 
+  // ── 3b. Create admin user if none exists ────────────────────────────────
+  const adminEmail    = process.env.ADMIN_EMAIL    || 'admin@example.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'SuperSecret123!';
+
+  const uc = new Client({ connectionString: process.env.DATABASE_URL });
+  await uc.connect();
+  let hasAdminUser = false;
+  try {
+    const res = await uc.query('SELECT COUNT(*) FROM "user"');
+    hasAdminUser = parseInt(res.rows[0].count, 10) > 0;
+  } catch {
+    hasAdminUser = false;
+  } finally {
+    await uc.end();
+  }
+
+  if (!hasAdminUser) {
+    console.log(`==> No admin user found — creating ${adminEmail} ...`);
+    try {
+      execSync(
+        `npx medusa user --email "${adminEmail}" --password "${adminPassword}"`,
+        { stdio: 'inherit', cwd: process.cwd() }
+      );
+      console.log('==> Admin user created ✓\n');
+    } catch (e) {
+      console.warn('==> Could not create admin user:', e.message, '\n');
+    }
+  } else {
+    console.log('==> Admin user already exists, skipping.\n');
+  }
+
   // ── 4. Print publishable API key ─────────────────────────────────────────
   try {
     const c2 = new Client({ connectionString: process.env.DATABASE_URL });
@@ -112,27 +143,6 @@ async function main() {
     }
   } catch (e) {
     console.warn('Could not fetch publishable key:', e.message);
-  }
-
-  // ── 4b. Ensure admin build is in place ───────────────────────────────────
-  // medusa build puts the admin at .medusa/server/public/admin/
-  // medusa start looks for it at ./public/admin/
-  // Copy it over so the paths align.
-  const adminSrc  = path.join(process.cwd(), '.medusa', 'server', 'public', 'admin');
-  const adminDest = path.join(process.cwd(), 'public', 'admin');
-  const adminIndexExists = fs.existsSync(path.join(adminDest, 'index.html'));
-
-  if (!adminIndexExists) {
-    if (fs.existsSync(adminSrc)) {
-      console.log('==> Copying admin build to public/admin/ ...');
-      fs.mkdirSync(adminDest, { recursive: true });
-      execSync(`cp -r "${adminSrc}/." "${adminDest}/"`, { stdio: 'inherit' });
-      console.log('==> Admin build ready ✓\n');
-    } else {
-      console.warn('==> Admin build not found at .medusa/server/public/admin/ — admin panel will be unavailable.\n');
-    }
-  } else {
-    console.log('==> Admin build already in place ✓\n');
   }
 
   // ── 5. Start server ───────────────────────────────────────────────────────
