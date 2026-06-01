@@ -30,12 +30,11 @@ export default {
     },
   },
 
+  // Admin panel disabled on Render free tier — 512MB RAM is insufficient to
+  // run both the API and the admin React bundle at the same time.
+  // To access admin: run `npm run dev` locally and visit http://localhost:9000/app
   admin: {
-    // During `medusa build` on Render we set DISABLE_ADMIN_BUILD=true to skip
-    // the memory-intensive React bundle (pre-built files are committed to git).
-    // At runtime the env var is absent so the admin IS served normally.
-    disable: process.env.DISABLE_ADMIN === "true",
-    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+    disable: true,
   },
   modules: {
     locking: {
