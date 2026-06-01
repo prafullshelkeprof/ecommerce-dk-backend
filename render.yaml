@@ -52,4 +52,4 @@ services:
         value: https://ecommerce-dk-dmrb.vercel.app,https://ecommerce-dk-admin.vercel.app
 
       - key: AUTH_CORS
-        value: https://ecommerce-dk-dmrb.vercel.app
+        value: https://ecommerce-dk-dmrb.vercel.app,https://ecommerce-dk-admin.vercel.app
