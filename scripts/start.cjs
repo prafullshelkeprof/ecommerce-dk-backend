@@ -116,7 +116,7 @@ async function main() {
     console.log(`==> No admin user found — creating ${adminEmail} ...`);
     try {
       execSync(
-        `npx medusa user --email "${adminEmail}" --password "${adminPassword}"`,
+        `npx medusa exec ./src/scripts/create-admin.ts`,
         { stdio: 'inherit', cwd: process.cwd() }
       );
       console.log('==> Admin user created ✓\n');
