@@ -148,6 +148,18 @@ async function main() {
     console.warn('Could not fetch publishable key:', e.message);
   }
 
+  // ── 4b. Always ensure auth identity is linked to a user record ──────────
+  console.log('==> Ensuring admin auth identity is linked to user record...');
+  try {
+    execSync(
+      `npx medusa exec ./src/scripts/link-admin.ts`,
+      { stdio: 'inherit', cwd: process.cwd() }
+    );
+    console.log('==> Admin link check complete ✓\n');
+  } catch (e) {
+    console.warn('==> Could not verify admin link (non-fatal):', e.message, '\n');
+  }
+
   // ── 5. Start server ───────────────────────────────────────────────────────
   console.log('==> Starting Medusa server...');
   execSync('npx medusa start', {
