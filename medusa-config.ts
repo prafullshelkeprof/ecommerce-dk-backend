@@ -32,7 +32,6 @@ export default {
 
   // Admin panel disabled on Render free tier — 512MB RAM is insufficient to
   // run both the API and the admin React bundle at the same time.
-  // To access admin: run `npm run dev` locally and visit http://localhost:9000/app
   admin: {
     disable: true,
   },
@@ -42,6 +41,17 @@ export default {
     },
     api_key: {
       resolve: "@medusajs/api-key",
+    },
+    auth: {
+      resolve: "@medusajs/auth",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/auth-emailpass",
+            id: "emailpass",
+          },
+        ],
+      },
     },
   },
 };
