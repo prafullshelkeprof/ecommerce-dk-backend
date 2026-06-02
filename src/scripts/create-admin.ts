@@ -5,28 +5,30 @@ export default async function createAdmin({ container }: ExecArgs) {
   const email    = process.env.ADMIN_EMAIL    || "admin@example.com";
   const password = process.env.ADMIN_PASSWORD || "SuperSecret123!";
 
-  const userModule = container.resolve(Modules.USER);
   const authModule = container.resolve(Modules.AUTH);
 
-  // Check if user already exists
-  const existing = await userModule.listUsers({ email });
-  if (existing.length > 0) {
-    console.log(`Admin user ${email} already exists — skipping.`);
-    return;
-  }
-
-  // Use the emailpass provider's register method — this correctly bcrypt-hashes
-  // the password before storing, so login works properly.
+  // Register via emailpass provider (bcrypt-hashes password correctly)
+  // If identity already exists, this will return success=false with a descriptive error
   const { success, authIdentity, error } = await authModule.register(
     "emailpass",
     { body: { email, password } }
   );
 
-  if (!success || !authIdentity) {
+  if (!success) {
+    // "Identity already exists" is not a fatal error — user was already created
+    if (error && error.toString().toLowerCase().includes("exist")) {
+      console.log(`Admin auth identity for ${email} already exists — skipping.`);
+      return;
+    }
     throw new Error(`Failed to register auth identity: ${error}`);
   }
 
+  if (!authIdentity) {
+    throw new Error("Auth identity missing after successful register.");
+  }
+
   // Create the user record and link it to the auth identity
+  const userModule = container.resolve(Modules.USER);
   const user = await userModule.createUsers({ email });
 
   await authModule.updateAuthIdentities({
@@ -34,5 +36,5 @@ export default async function createAdmin({ container }: ExecArgs) {
     app_metadata: { user_id: user.id },
   });
 
-  console.log(`Admin user created: ${email}`);
+  console.log(`Admin user created successfully: ${email}`);
 }
