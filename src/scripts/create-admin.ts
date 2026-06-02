@@ -15,21 +15,24 @@ export default async function createAdmin({ container }: ExecArgs) {
     return;
   }
 
-  // Create the user record
-  const user = await userModule.createUsers({ email });
-  console.log(`Created user: ${user.id}`);
+  // Use the emailpass provider's register method — this correctly bcrypt-hashes
+  // the password before storing, so login works properly.
+  const { success, authIdentity, error } = await authModule.register(
+    "emailpass",
+    { body: { email, password } }
+  );
 
-  // Create the emailpass auth identity linked to this user
-  await authModule.createAuthIdentities({
-    provider_identities: [
-      {
-        provider: "emailpass",
-        entity_id: email,
-        provider_metadata: { password },
-      },
-    ],
+  if (!success || !authIdentity) {
+    throw new Error(`Failed to register auth identity: ${error}`);
+  }
+
+  // Create the user record and link it to the auth identity
+  const user = await userModule.createUsers({ email });
+
+  await authModule.updateAuthIdentities({
+    id: authIdentity.id,
     app_metadata: { user_id: user.id },
   });
 
-  console.log(`Admin user ready: ${email}`);
+  console.log(`Admin user created: ${email}`);
 }

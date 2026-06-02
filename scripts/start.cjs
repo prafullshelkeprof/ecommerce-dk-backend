@@ -104,7 +104,10 @@ async function main() {
   await uc.connect();
   let hasAdminUser = false;
   try {
-    const res = await uc.query('SELECT COUNT(*) FROM "user"');
+    const res = await uc.query(
+      `SELECT COUNT(*) FROM auth_identity
+       WHERE provider_identities::text LIKE '%emailpass%'`
+    );
     hasAdminUser = parseInt(res.rows[0].count, 10) > 0;
   } catch {
     hasAdminUser = false;
