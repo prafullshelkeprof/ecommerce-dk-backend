@@ -29,7 +29,8 @@ export default async function linkAdmin({ container }: ExecArgs) {
   // Check if already linked
   if (identity.app_metadata?.user_id) {
     console.log(`Already linked to user_id: ${identity.app_metadata.user_id} — verifying user record exists...`);
-    const users = await userModule.listUsers({ id: [identity.app_metadata.user_id] });
+    const userId = (identity.app_metadata as Record<string, string>).user_id;
+    const users = await userModule.listUsers({ id: [userId] });
     if (users.length > 0) {
       console.log(`User record exists. Setup is correct — no action needed.`);
       return;
