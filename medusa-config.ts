@@ -29,7 +29,6 @@ export default defineConfig({
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     },
-    port: parseInt(process.env.PORT || "9000"),
   },
 
   // Admin panel disabled on Render free tier — 512MB RAM is insufficient to
