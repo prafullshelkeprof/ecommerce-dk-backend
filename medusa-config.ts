@@ -1,3 +1,5 @@
+import { defineConfig } from "@medusajs/framework/utils";
+
 // Strip sslmode and channel_binding from the URL so pg-connection-string doesn't
 // override SSL config with verify-full semantics. SSL is handled via databaseDriverOptions.
 function buildDatabaseUrl(raw: string | undefined): string {
@@ -9,7 +11,7 @@ function buildDatabaseUrl(raw: string | undefined): string {
     .replace(/\?$/, '');
 }
 
-export default {
+export default defineConfig({
   projectConfig: {
     databaseUrl: buildDatabaseUrl(process.env.DATABASE_URL),
     redisUrl: process.env.REDIS_URL,
@@ -26,32 +28,30 @@ export default {
       authCors: process.env.AUTH_CORS || "",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
-      port: parseInt(process.env.PORT || "9000"),
     },
+    port: parseInt(process.env.PORT || "9000"),
   },
 
   // Admin panel disabled on Render free tier — 512MB RAM is insufficient to
   // run both the API and the admin React bundle at the same time.
   admin: {
-    disable: true,
+    disable: process.env.NODE_ENV === "production",
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+    path: "/app",
   },
-  modules: {
-    locking: {
-      resolve: "@medusajs/locking",
-    },
-    api_key: {
-      resolve: "@medusajs/api-key",
-    },
-    auth: {
-      resolve: "@medusajs/auth",
+
+  // Only override/extend default modules — all other core modules remain auto-loaded
+  modules: [
+    {
+      resolve: "@medusajs/medusa/auth",
       options: {
         providers: [
           {
-            resolve: "@medusajs/auth-emailpass",
+            resolve: "@medusajs/medusa/auth-emailpass",
             id: "emailpass",
           },
         ],
       },
     },
-  },
-};
+  ],
+});

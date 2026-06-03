@@ -3,7 +3,16 @@
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\PrafullShelke\\\\Learning\\\\ecommerce-dk-backend\" -Recurse)",
       "Bash(Select-Object FullName)",
-      "PowerShell(gh auth status)"
+      "PowerShell(gh auth status)",
+      "Read(//c/Users/PrafullShelke/Gogift/dotnet-b2b-account-service/**)",
+      "Bash(dotnet build *)",
+      "Bash(echo \"=== b2b root Nuget.Config? ===\"; ls \"C:/Users/PrafullShelke/Gogift/dotnet-b2b-account-service\" | grep -i nuget; echo \"=== basket Nuget.Config ===\"; cat \"C:/Users/PrafullShelke/Gogift/dotnet-basket-service/Nuget.Config\" 2>&1; echo \"=== b2b Nuget.Config content \\(if any\\) ===\"; cat \"C:/Users/PrafullShelke/Gogift/dotnet-b2b-account-service/Nuget.Config\" 2>&1 | head -30)",
+      "Bash(dotnet test *)",
+      "Bash(cd \"C:/Users/PrafullShelke/Gogift\"; echo \"=== basket launchSettings ===\"; cat dotnet-basket-service/src/main/Properties/launchSettings.json 2>/dev/null | grep -iE \"applicationUrl|sslPort\" | head; echo \"=== b2b launchSettings ===\"; cat dotnet-b2b-account-service/src/main/Properties/launchSettings.json 2>/dev/null | grep -iE \"applicationUrl|sslPort\" | head; echo \"=== graphql route \\(basket\\) ===\"; grep -rniE \"graphql|MapGraphQL|UseGraphQL|/graphql\" dotnet-basket-service/src/main/Program.cs 2>/dev/null | head; echo \"=== jwt-gen ===\"; ls dotnet-b2b-account-service/jwt-gen 2>/dev/null | head)",
+      "Bash(timeout 30 ./jwt-gen.exe)",
+      "Bash(./jwt-gen.exe)",
+      "PowerShell(& \"C:/Users/PrafullShelke/Gogift/dotnet-b2b-account-service/jwt-gen/bin/Debug/net8.0/jwt-gen.exe\" 2>&1)",
+      "Bash(npm run *)"
     ]
   }
 }
